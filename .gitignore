@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+credentials.json
+service_account.json
+*.xlsx
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,30 @@
+name: Weekly Foreclosure Scrape
+
+on:
+  schedule:
+    # Every Monday 08:00 UTC (~04:00 ET)
+    - cron: "0 8 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_WORKSHEET_NAME: ${{ vars.GOOGLE_WORKSHEET_NAME || 'Miami-Dade' }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          LOOKAHEAD_DAYS: ${{ vars.LOOKAHEAD_DAYS || '14' }}
+        run: python -m src.main
