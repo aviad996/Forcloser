@@ -1,15 +1,15 @@
 """Google Sheets writer.
 
-Authenticates with a Google service account and replaces the contents of a worksheet
-with the latest scrape. Existing rows are kept on a sibling 'History' worksheet so
-nothing is lost between runs.
+Each weekly run creates a NEW worksheet named like 'Miami-Dade 2026-05-05'. Previous
+weeks' tabs are never touched — running again on the same day just refreshes that
+day's tab in place.
 """
 from __future__ import annotations
 
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import date
 from typing import Sequence
 
 import gspread
@@ -30,30 +30,19 @@ def _credentials() -> Credentials:
     return Credentials.from_service_account_file(path, scopes=SCOPES)
 
 
-def _get_or_create_worksheet(sheet, title: str, rows: int = 1000, cols: int = 12):
-    try:
-        return sheet.worksheet(title)
-    except gspread.WorksheetNotFound:
-        return sheet.add_worksheet(title=title, rows=rows, cols=cols)
-
-
-def write(sheet_id: str, worksheet_name: str, header: Sequence[str], rows: Sequence[Sequence[str]]) -> None:
+def write(sheet_id: str, worksheet_base: str, header: Sequence[str], rows: Sequence[Sequence[str]]) -> None:
     client = gspread.authorize(_credentials())
     sheet = client.open_by_key(sheet_id)
 
-    current = _get_or_create_worksheet(sheet, worksheet_name)
-    history = _get_or_create_worksheet(sheet, f"{worksheet_name} – History")
+    title = f"{worksheet_base} {date.today().isoformat()}"
+    try:
+        ws = sheet.worksheet(title)
+        ws.clear()
+    except gspread.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=title, rows=max(len(rows) + 50, 200), cols=max(len(header) + 2, 12))
 
-    if history.row_count < 2:
-        history.update("A1", [list(header) + ["Run At"]])
+    ws.update("A1", [list(header)] + [list(r) for r in rows], value_input_option="USER_ENTERED")
+    ws.format("A1:Z1", {"textFormat": {"bold": True}})
+    ws.freeze(rows=1)
 
-    run_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
-    history_rows = [list(r) + [run_at] for r in rows]
-    if history_rows:
-        history.append_rows(history_rows, value_input_option="USER_ENTERED")
-
-    current.clear()
-    current.update("A1", [list(header)] + [list(r) for r in rows], value_input_option="USER_ENTERED")
-    current.format("A1:Z1", {"textFormat": {"bold": True}})
-
-    log.info("Wrote %d rows to '%s' (and appended to history)", len(rows), worksheet_name)
+    log.info("Wrote %d rows to new tab '%s'", len(rows), title)

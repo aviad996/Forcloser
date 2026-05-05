@@ -7,8 +7,9 @@ Google Sheet. Designed to run free on GitHub Actions (no server).
 
 1. Hits `miamidade.realforeclose.com` for each weekday in the next 14 days.
 2. Parses the auction items (case #, address, folio, plaintiff, opening bid, status).
-3. Replaces the contents of the configured Google Sheet worksheet with the latest run,
-   and appends the same rows to a sibling `… – History` worksheet so nothing is lost.
+3. Creates a **new tab** in the Google Sheet named `Miami-Dade YYYY-MM-DD` for each
+   run. Previous weeks' tabs are never touched, so the sheet builds up a full history
+   automatically. Re-running on the same day refreshes that day's tab in place.
 
 ## One-time setup
 
@@ -34,7 +35,7 @@ In the repo, **Settings → Secrets and variables → Actions**:
 |--------|---------------------------------|------------------------------------------|
 | Secret | `GOOGLE_SHEET_ID`               | the sheet ID from step 2                 |
 | Secret | `GOOGLE_SERVICE_ACCOUNT_JSON`   | full contents of the downloaded JSON key |
-| Var    | `GOOGLE_WORKSHEET_NAME` *(opt)* | default `Miami-Dade`                     |
+| Var    | `GOOGLE_WORKSHEET_NAME` *(opt)* | tab-name prefix, default `Miami-Dade`    |
 | Var    | `LOOKAHEAD_DAYS` *(opt)*        | default `14`                             |
 
 ### 4. Trigger the first run

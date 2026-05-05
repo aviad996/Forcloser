@@ -17,7 +17,7 @@ def main() -> int:
     log = logging.getLogger("forcloser")
 
     sheet_id = os.environ["GOOGLE_SHEET_ID"]
-    worksheet = os.environ.get("GOOGLE_WORKSHEET_NAME", "Miami-Dade")
+    worksheet_base = os.environ.get("GOOGLE_WORKSHEET_NAME", "Miami-Dade")
     lookahead = int(os.environ.get("LOOKAHEAD_DAYS", "14"))
 
     log.info("Scraping Miami-Dade for next %d days...", lookahead)
@@ -25,7 +25,7 @@ def main() -> int:
     log.info("Got %d auctions", len(auctions))
 
     rows = [a.as_row() for a in auctions]
-    google_sheets.write(sheet_id, worksheet, miami_dade.Auction.header(), rows)
+    google_sheets.write(sheet_id, worksheet_base, miami_dade.Auction.header(), rows)
     return 0
 
 
