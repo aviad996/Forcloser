@@ -1,0 +1,31 @@
+name: Scraper Dry-Run
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "src/scrapers/**"
+      - "src/dry_run.py"
+      - "requirements.txt"
+      - ".github/workflows/scraper-dry-run.yml"
+  workflow_dispatch: {}
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper (no Sheets write)
+        env:
+          LOOKAHEAD_DAYS: "14"
+        run: python -m src.dry_run
